@@ -1,5 +1,12 @@
 {
   "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@routes": ["routes/"],
+      "@controllers/*": ["controllers/*"],
+      "@middlewares": ["middlewares"],
+      "@types/*": ["./node_modules/@types"]
+    },
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */
