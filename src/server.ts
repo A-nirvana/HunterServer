@@ -1,33 +1,16 @@
 import { httpServer } from "./index";
 import dotenv from "dotenv";
 import path from "path";
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 let server: any;
-const firebaseConfig = {
-    apiKey: process.env.API_KEY,
-    authDomain: process.env.AUTH_DOMAIN,
-    projectId: process.env.PROJECT_ID,
-    storageBucket: process.env.STORAGE_BUCKET,
-    messagingSenderId: process.env.MESSAGING_SENDER_ID,
-    appId: process.env.APP_ID,
-    measurementId: process.env.MEASUREMENT_ID
-};
 
-const fire = async() =>{
-    const fireApp = initializeApp(firebaseConfig);
-}
-
-fire().then(()=>{
     server = httpServer.listen(process.env.PORT, () => {
         console.log(`⚡️[Server]: Listening on port ${process.env.PORT}`);
     });
-})
 
 
-const exitHandler = () => {
+const exitHandler = () => { 
     if (server) {
         server.close(() => {
             console.log("Server closed");
