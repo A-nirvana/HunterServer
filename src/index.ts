@@ -2,12 +2,11 @@ import express from 'express'
 import { WebSocketServer, WebSocket } from 'ws'
 import { createServer } from "http";
 import * as Router from './routes/index'
-
+import { Server } from 'socket.io';
 const app = express()
 const httpServer = createServer(app)
 
 const wss = new WebSocketServer({ server: httpServer });
-let users = 0;
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
 wss.on('connection', function connection(ws) {
@@ -20,7 +19,6 @@ wss.on('connection', function connection(ws) {
       }
     });
   });
-  console.log('Client connected', ++users);
   ws.send('Hello! Message From Server!!');
 });
 
@@ -45,5 +43,95 @@ app.get('/', (req, res) => {
 })
 
 app.use('/auth', Router.userRoutes.router)
+
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173"
+  }
+});
+
+const rooms = {};
+const users = {};
+
+io.on('connection', (socket) => {
+  console.log('a user connected ' + socket.id);
+
+  socket.on("disconnect", (params) => {
+    Object.keys(rooms).map(roomId => {
+      rooms[roomId].users = rooms[roomId].users.filter(x => x !== socket.id)
+    })
+    delete users[socket.id];
+  })
+
+  socket.on("join", (params) => {
+    const roomId = params.roomId;
+    users[socket.id] = {
+      roomId: roomId
+    }
+    if (!rooms[roomId]) {
+      rooms[roomId] = {
+        roomId,
+        users: []
+      }
+    }
+    rooms[roomId].users.push(socket.id);
+    console.log("user added to room " + roomId);
+  });
+
+  socket.on("localDescription", (params) => {
+    let roomId = users[socket.id].roomId;
+    
+    let otherUsers = rooms[roomId].users;
+    otherUsers.forEach(otherUser => {
+      if (otherUser !== socket.id) {
+        io.to(otherUser).emit("localDescription", {
+            description: params.description
+        })
+      }
+    })
+  })
+
+  socket.on("remoteDescription", (params) => {
+    let roomId = users[socket.id].roomId;    
+    let otherUsers = rooms[roomId].users;
+
+    otherUsers.forEach(otherUser => {
+      if (otherUser !== socket.id) {
+        io.to(otherUser).emit("remoteDescription", {
+            description: params.description
+        })
+      }
+    })
+  });
+
+  socket.on("iceCandidate", (params) => {
+    let roomId = users[socket.id].roomId;    
+    let otherUsers = rooms[roomId].users;
+
+    otherUsers.forEach(otherUser => {
+      if (otherUser !== socket.id) {
+        io.to(otherUser).emit("iceCandidate", {
+          candidate: params.candidate
+        })
+      }
+    })
+  });
+
+
+  socket.on("iceCandidateReply", (params) => {
+    let roomId = users[socket.id].roomId;    
+    let otherUsers = rooms[roomId].users;
+
+    otherUsers.forEach(otherUser => {
+      if (otherUser !== socket.id) {
+        io.to(otherUser).emit("iceCandidateReply", {
+          candidate: params.candidate
+        })
+      }
+    })
+  });
+
+});
 
 export { httpServer, wss };
