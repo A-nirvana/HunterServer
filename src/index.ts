@@ -24,6 +24,7 @@ wss.on('connection', function connection(ws) {
   ws.send('Hello! Message From Server!!');
 });
 
+app.use(express.json())
 app.use((req, res, next) => {
   const { origin } = req.headers;
   const theOrigin =
