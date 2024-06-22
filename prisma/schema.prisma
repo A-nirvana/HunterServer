@@ -29,7 +29,7 @@ model userChats {
 
 model Chats {
   id Int @id @default(autoincrement())
-  createdAt DateTime
+  createdAt DateTime @default(now())
   messages Message[]
 }
 
@@ -37,7 +37,7 @@ model Message{
   id Int @id @default(autoincrement())
   text String?
   img String?
-  createdAt DateTime
+  createdAt DateTime @default(now())
   // sender User @relation(fields: [UserId], references: [id])
   UserId Int
   chat Chats @relation(fields: [chatId], references: [id])
